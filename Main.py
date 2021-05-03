@@ -1,3 +1,7 @@
+"""
+Code responsible for Face recognition, Arduino Communication, Video Capture and Video Display
+"""
+
 import threading
 import time
 import cv2
@@ -11,7 +15,7 @@ class videoStream:
     frame = np.empty([480, 640, 3])
     displayFrame = True
     exit = False
-    location = [200,150]
+    location = [200, 150]
     faceInCam = False
     tracking = True
     autoOff = True
@@ -54,16 +58,17 @@ def captureVid():
             else:
                 obj.autoOff = True
         
+
 def faceSearch():
     while True:
         if(obj.exit):
             break
-        if(obj.frameCount > 100):
+        if(obj.frameCount > 100 and obj.autoOff):
             if(obj.faceInCam):
                 obj.faceInCam = False
             else:
                 obj.displayFrame = False
-                obj.frameCount = 1
+            obj.frameCount = 1
         else:
             time.sleep(1)
         
@@ -98,6 +103,7 @@ def recogFace():
                 s = str(int(obj.location[0])) + "|" + str(int(obj.location[1])) + "\n"
                 print(s)
                 ser.write(s.encode())
+
 
 if __name__ == "__main__":
     ser = serial.Serial('COM5', 9600, timeout=0.1)
