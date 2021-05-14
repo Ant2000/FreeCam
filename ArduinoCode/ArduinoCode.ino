@@ -8,22 +8,22 @@ int pos2 = 90;
 String s1, s2, s1b = "", s2b = "";
 char s;
 bool flag, newData = false;
-const double kh = (tan(29 * M_PI / 180) / 200);
-const double kw = (tan(29 * M_PI / 180) / 200);
+const double kh = (tan(29 * M_PI / 180) / 480);
+const double kw = (tan(29 * M_PI / 180) / 640);
 int b, h, locationW, locationH;
 double betaW, betaH;
 
 int intw = 0;
 int derw = 0;
 float kpw = 0.1;
-float kiw = 0.05;
+float kiw = 0;
 float kdw = 0;
 float errw = 0;
 
 int inth = 0;
 int derh = 0;
-float kph = 0.4;
-float kih = 0.05;
+float kph = 0.1;
+float kih = 0;
 float kdh = 0;
 float errh = 0;
 
@@ -60,12 +60,8 @@ void loop()
       s1b = s1; s2b = s2;
       newData = false;
       locationW = s1.toInt(); locationH = s2.toInt();
-      b = abs(locationW - 200); h = abs(locationH - 150);
+      b = abs(locationW - 320); h = abs(locationH - 240);
       betaW = atan(b * kw) * 180 / M_PI; betaH = atan(h * kh) * 180/ M_PI;
-      if(locationW > 200)
-        betaW = betaW  * -1;
-      if(locationH < 150)
-        betaH = betaH * -1;
 
       intw = intw + betaW; derw = betaW - errw;
       errw = betaW;
@@ -74,21 +70,34 @@ void loop()
       inth = inth + betaH; derh = betaH - errh;
       errh = betaH;
       betaH = (kph * betaH) + (kih * inth) + (kdh * derh);
-    
- 
-      pos1 = pos1 + betaW;
+
+      if(locationW < 320)
+        pos1 = round(pos1 + (betaW  * -1));
+      else
+        pos1 = round(pos1 + betaW);
+      if(locationH < 240)
+        pos2 = round(pos2 + (betaH * -1));
+      else
+        pos2 = round(pos2 + betaH);
+
+      /*Serial.print(betaW * 100);
+      Serial.print("\t");
+      Serial.println(betaH * 100);*/
+
       if(pos1 < 0)
         pos1 = 0;
       else if(pos1 > 180)
         pos1 = 180;
 
-      pos2 = pos2 + betaH;
       if(pos2 < 0)
         pos2 = 0;
       else if(pos2 > 180)
         pos2 = 180;
       servo1.write(pos1);
       servo2.write(pos2);
+      /*Serial.print(pos1);
+      Serial.print("\t");
+      Serial.println(pos2);*/
     }
   }
 }

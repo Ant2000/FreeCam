@@ -10,6 +10,11 @@ with open("./key.json", 'r') as f:
 
 connection = sq3.connect("Parameters.db")
 cursor = connection.cursor()
+cursor.execute("UPDATE parameters SET status = 1 WHERE parameter = 'track'")
+cursor.execute("UPDATE parameters SET status = 1 WHERE parameter = 'userView'")
+cursor.execute("UPDATE parameters SET status = 1 WHERE parameter = 'autoOff'")
+cursor.execute("UPDATE parameters SET status = 0 WHERE parameter = 'default'")
+connection.commit()
 
 # cursor.execute("""CREATE TABLE IF NOT EXISTS
 # parameters(parameter TEXT PRIMARY KEY, status INTEGER)""")
