@@ -60,6 +60,12 @@ void loop()
       s1b = s1; s2b = s2;
       newData = false;
       locationW = s1.toInt(); locationH = s2.toInt();
+      if(locationH == 700 and locationW == 700)
+      {
+        servo1.write(90);
+        servo2.write(90);
+        continue;
+      }
       b = abs(locationW - 320); h = abs(locationH - 240);
       betaW = atan(b * kw) * 180 / M_PI; betaH = atan(h * kh) * 180/ M_PI;
 

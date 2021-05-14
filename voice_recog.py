@@ -3,7 +3,6 @@ This code is for obtaining voice recognition results from google cloud.
 """
 import speech_recognition as sr
 import sqlite3 as sq3
-import json
 
 with open("./key.json", 'r') as f:
     GOOGLE_CLOUD_SPEECH_CREDENTIALS = f.read()

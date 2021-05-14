@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import serial
 import mediapipe as mp
-import sqlite3 as sq3
+import pyvirtualcam
 
 
 class videoStream:
@@ -16,86 +16,62 @@ class videoStream:
     frame = np.empty([480, 640, 3])
     displayFrame = True
     exit = False
-    location = [200, 150]
+    location = [320, 240]
     faceInCam = False
     tracking = True
     autoOff = True
     frameCount = 1
-    default = 0
 
 
-def updateVal():
-    connection = sq3.connect("Parameters.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM parameters")
-
+def updateVal(key):
     while True:
-        time.sleep(0.5)
-        test = cursor.fetchall()
-
-        if test[0][1] == 0:
-            obj.tracking = False
-            obj.autoOff = False
-        else:
-            obj.tracking = True
-
-        if test[1][1] == 0:
-            obj.autoOff = False
-        else:
-            obj.autoOff = True
-
-        if test[2][1] == 0:
-            obj.displayFrame = False
-        else:
-            obj.displayFrame = True
-
-        if test[3][1] == 0:
-            obj.default = False
-        else:
-            obj.default = True
-
-
-def captureVid():
-    while True:
-        if obj.displayFrame:
-            ret, frame = obj.cam.read()
-            obj.frame = frame
-            obj.frameCount = (obj.frameCount + 1) % 150
-        else:
-            obj.frame = np.empty([480, 640, 3])
-        # print(obj.frameCount, obj.faceInCam)
-        
-        cv2.imshow('frame', obj.frame)
-        key = cv2.waitKey(1)
-        if key == ord('q'):
+        key[0] = input("Give me some Information: ")
+        if key[0] == 'q':
             obj.exit = True
             obj.cam.release()
             ser.close()
             cv2.destroyAllWindows()
             break
-        elif key == ord('a'):
+        elif key[0] == 'a':
             obj.displayFrame = True
-        elif key == ord('s'):
+        elif key[0] == 's':
             obj.autoOff = False
             if obj.tracking:
                 obj.tracking = False
             else:
                 obj.tracking = True
-        elif key == ord(" "):
+        elif key[0] == " ":
             obj.tracking = False
-            obj.location = [200, 150]
+            obj.location = [700, 700]
             obj.autoOff = False
-        elif key == ord("z"):
+            s = str(int(obj.location[0])) + "|" + str(int(obj.location[1])) + "\n"
+            ser.write(s.encode())
+        elif key[0] == "z":
             if obj.autoOff:
                 obj.autoOff = False
             else:
                 obj.autoOff = True
+
+
+def captureVid():
+    with pyvirtualcam.Camera(width=640, height=480, fps=20) as cam:
+        while not obj.exit:
+            if obj.displayFrame:
+                ret, frame = obj.cam.read()
+                obj.frame = frame
+                obj.frameCount = (obj.frameCount + 1) % 150
+            else:
+                obj.frame = np.empty([480, 640, 3])
+            # print(obj.frameCount, obj.faceInCam)
+            try:
+                frame = cv2.cvtColor(obj.frame, cv2.COLOR_BGR2RGB)
+                cam.send(frame)
+            except:
+                continue
         
 
 def faceSearch():
-    while True:
-        if obj.exit:
-            break
+    while not obj.exit:
         if obj.frameCount > 100 and obj.autoOff:
             if obj.faceInCam:
                 obj.faceInCam = False
@@ -110,9 +86,7 @@ def recogFace():
     time.sleep(2)
     mp_face_mesh = mp.solutions.face_mesh
     with mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
-        while True:
-            if obj.exit:
-                break
+        while not obj.exit:
             if obj.tracking:
                 try:
                     image = obj.frame
@@ -143,7 +117,7 @@ def recogFace():
                         obj.location[1] = avgY
                         obj.faceInCam = True
                         s = str(int(obj.location[0])) + "|" + str(int(obj.location[1])) + "\n"
-                        print(s)
+                        # print(s)
                         ser.write(s.encode())
                 except Exception as e:
                     # print(e)
@@ -153,12 +127,17 @@ def recogFace():
 if __name__ == "__main__":
     ser = serial.Serial('COM5', 9600, timeout=0.1)
     obj = videoStream()
+    key = [None]
     p1 = threading.Thread(target=captureVid)
     p2 = threading.Thread(target=faceSearch)
     p3 = threading.Thread(target=recogFace)
+    p4 = threading.Thread(target=updateVal, args=(key,))
     p1.start()
     p2.start()
     p3.start()
+    p4.daemon = True
+    p4.start()
     p1.join()
     p2.join()
     p3.join()
+    p4.join()
